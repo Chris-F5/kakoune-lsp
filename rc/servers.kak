@@ -209,11 +209,21 @@ hook -group lsp-filetype-html global BufSetOption filetype=html %{
 }
 
 hook -group lsp-filetype-lean global BufSetOption filetype=lean %{
-    set-option buffer lsp_servers %{
+    # For some reason `lake serve` likes to be started in the workspace root.
+    # If this gets fixed we can remove the wrapper.
+    set-option buffer lsp_servers "
         [lake]
-        root_globs = ["lakefile.toml", ".git", ".hg"]
-        args = ["serve"]
-    }
+        root_globs = ['lakefile.lean', 'lakefile.toml', '.git', '.hg']
+        command = 'sh'
+        args = [
+            '-c',
+            '''
+              kak_buffile=%val{buffile}
+              %opt{lsp_find_root} lakefile.lean lakefile.toml .git .hg >/dev/null
+              exec lake serve
+            '''
+        ]
+    "
 }
 
 hook -group lsp-filetype-vue global BufSetOption filetype=(?:vue) %{
